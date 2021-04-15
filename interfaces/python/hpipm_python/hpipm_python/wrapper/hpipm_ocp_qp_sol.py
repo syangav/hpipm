@@ -70,6 +70,8 @@ class hpipm_ocp_qp_sol:
 			vec = self.__get_u(idx_start, idx_end)
 		elif(field=='x'):
 			vec = self.__get_x(idx_start, idx_end)
+		elif(field=='pi'):
+			vec = self.__get_pi(idx_start, idx_end)
 		else:
 			raise NameError('hpipm_ocp_qp_sol.get: wrong field')
 		return vec
@@ -117,6 +119,27 @@ class hpipm_ocp_qp_sol:
 				tmp_ptr = cast(x[i].ctypes.data, POINTER(c_double))
 				self.__hpipm.d_ocp_qp_sol_get_x(i, self.qp_sol_struct, tmp_ptr)
 		return x
+
+	def __get_pi(self, idx_start, idx_end=None):
+		# npi = nx
+		npi = np.zeros((1,1), dtype=int);
+		if idx_end==None:
+			# get npi = nx at stage
+			tmp_ptr = cast(npi.ctypes.data, POINTER(c_int))
+			self.__hpipm.d_ocp_qp_dim_get_nx(self.dim.dim_struct, idx_start, tmp_ptr)
+			pi = np.zeros((npi[0,0], 1))
+			tmp_ptr = cast(pi.ctypes.data, POINTER(c_double))
+			self.__hpipm.d_ocp_qp_sol_get_pi(idx_start, self.qp_sol_struct, tmp_ptr)
+		else:
+			pi = []
+			for i in range(idx_start, idx_end+1):
+				# get npi = nx at stage
+				tmp_ptr = cast(npi.ctypes.data, POINTER(c_int))
+				self.__hpipm.d_ocp_qp_dim_get_nx(self.dim.dim_struct, i, tmp_ptr)
+				pi.append(np.zeros((npi[0,0], 1)))
+				tmp_ptr = cast(pi[i].ctypes.data, POINTER(c_double))
+				self.__hpipm.d_ocp_qp_sol_get_pi(i, self.qp_sol_struct, tmp_ptr)
+		return pi
 
 
 	def print_C_struct(self):
